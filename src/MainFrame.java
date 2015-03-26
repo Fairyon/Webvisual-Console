@@ -475,7 +475,6 @@ public class MainFrame extends JFrame {
           processBuilder = new ProcessBuilder(command);
           processBuilder.directory(new File(pathToServer));
           ExecHelper.exec(this,pro=processBuilder.start(),false);
-          ProcessWatcher pw = new ProcessWatcher(pro);
           pro.waitFor();
           if(pro.exitValue()!=0){ 
             processNewError("Problem by Update\n");
