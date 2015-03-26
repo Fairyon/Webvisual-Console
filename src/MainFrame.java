@@ -26,6 +26,7 @@ import java.util.ResourceBundle;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -40,9 +41,12 @@ import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
+import javax.swing.text.StyledDocument;
 
 public class MainFrame extends JFrame {
 
@@ -58,8 +62,10 @@ public class MainFrame extends JFrame {
   // GUI Components
   private static final long serialVersionUID = 1L;
   private JPanel contentPane;
+  private final JFileChooser fc = new JFileChooser();
   private JMenuBar jMenuBar1 = new JMenuBar();
   private JMenu jMenuServer = new JMenu();
+  private JMenuItem jMenuServerChoose;
   private JMenuItem jMenuServerStart;
   private JMenuItem jMenuServerStop;
   private JMenuItem jMenuServerExit;
@@ -67,6 +73,7 @@ public class MainFrame extends JFrame {
   private JMenuItem jMenuLanguage;
   private JMenu jMenuHelp = new JMenu();
   private JMenuItem jMenuHelpAbout;
+  private JLabel pathDisplay = new JLabel();
   private JLabel statusBar = new JLabel();
   private BorderLayout borderLayout1 = new BorderLayout();
   private JTextPane logArea = new JTextPane();
@@ -88,6 +95,7 @@ public class MainFrame extends JFrame {
   
   // Helping variables
   private String pathToServer;
+  private String appFile;
   private boolean opened = true; //true if window is opened
   private boolean serverIsRunning = false; //true if server is running
 
@@ -96,6 +104,7 @@ public class MainFrame extends JFrame {
     initConfig();
     initLocales();
     pathToServer = config.getProperty("path");
+    appFile = config.getProperty("appFile");
     currentLocale = Integer.parseInt(config.getProperty("locale"));
     messages = ResourceBundle.getBundle("Locale", supportedLocales[currentLocale]);
     
@@ -163,6 +172,12 @@ public class MainFrame extends JFrame {
     /* Menus */
     // Server Menu
     jMenuServer.setText(messages.getString("serverMenu"));
+    jMenuServerChoose = new JMenuItem(messages.getString("chooseServerBt"));
+    jMenuServerChoose.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        chooseCommandActionPerformed();
+      }
+    });
     jMenuServerStart = new JMenuItem(messages.getString("runServerBt"));
     jMenuServerStart.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -183,6 +198,7 @@ public class MainFrame extends JFrame {
       }
     });
     
+    jMenuServer.add(jMenuServerChoose);
     jMenuServer.add(jMenuServerStart);
     jMenuServer.add(jMenuServerStop);
     jMenuServer.add(jMenuServerExit);
@@ -219,6 +235,13 @@ public class MainFrame extends JFrame {
     jMenuHelp.add(jMenuHelpAbout);
     jMenuBar1.add(jMenuHelp);
     
+    /* Path Display Bar */
+    pathDisplay.setBorder(BorderFactory.createEtchedBorder());
+    pathDisplay.setDebugGraphicsOptions(0);
+    pathDisplay.setDoubleBuffered(true);
+    pathDisplay.setOpaque(false);
+    pathDisplay.setVerifyInputWhenFocusTarget(true);
+    pathDisplay.setText(pathToServer + "\\" + appFile);
     
     /* Text Area */    
     logArea.setBackground(UIManager.getColor("control"));
@@ -231,6 +254,10 @@ public class MainFrame extends JFrame {
     logArea.setDoubleBuffered(true);
     logArea.setOpaque(false);
     logArea.setText("");
+    Style style = logArea.addStyle("error", null);
+    StyleConstants.setForeground(style, Color.red);
+    style = logArea.addStyle("standard", null);
+    StyleConstants.setForeground(style, Color.black);
     //logArea.setWrapStyleWord(true);
     
     /* Status Bar */
@@ -243,6 +270,7 @@ public class MainFrame extends JFrame {
     
     /* Put all together*/
     setJMenuBar(jMenuBar1);
+    contentPane.add(pathDisplay, BorderLayout.NORTH);
     contentPane.add(statusBar, BorderLayout.SOUTH);
     contentPane.add(jScrollPane1, BorderLayout.CENTER);
     jScrollPane1.getViewport().add(logArea, null);
@@ -359,16 +387,14 @@ public class MainFrame extends JFrame {
   }
 
   // Append a text to the textArea and Update a Cursor
-  private void updateTextArea(JTextPane textArea, String text, Color c) {
-    StyleContext sc = StyleContext.getDefaultStyleContext();
-    AttributeSet aset = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.Foreground, c);
-    aset = sc.addAttribute(aset, StyleConstants.FontFamily, "Lucida Console");
-    aset = sc.addAttribute(aset, StyleConstants.Alignment, StyleConstants.ALIGN_JUSTIFIED);
-    int len = textArea.getDocument().getLength();
-    textArea.setCaretPosition(len);
-    textArea.setCharacterAttributes(aset, false);
-    textArea.setText(textArea.getText()+text);
-    //textArea.replaceSelection(text);
+  private void updateTextArea(JTextPane textArea, String text, String styleName) {
+    StyledDocument doc = textArea.getStyledDocument();
+    Style style = textArea.getStyle(styleName);
+    try { 
+      doc.insertString(doc.getLength(), text, style); 
+    } catch (BadLocationException e){
+      //TODO react on exception
+    }
   }
 
   // Exit program action performed
@@ -396,12 +422,12 @@ public class MainFrame extends JFrame {
 
   // Put an input String on the textArea
   public void processNewInput(String input) {
-    updateTextArea(logArea, input, Color.BLACK);
+    updateTextArea(logArea, input, "standard");
   }
 
   //Put an error String on the textArea
   public void processNewError(String error) {
-    updateTextArea(logArea, error, Color.RED);
+    updateTextArea(logArea, error, "error");
   }
 
   // clear the executable Thread and set the right labels
@@ -449,6 +475,7 @@ public class MainFrame extends JFrame {
           processBuilder = new ProcessBuilder(command);
           processBuilder.directory(new File(pathToServer));
           ExecHelper.exec(this,pro=processBuilder.start(),false);
+          ProcessWatcher pw = new ProcessWatcher(pro);
           pro.waitFor();
           if(pro.exitValue()!=0){ 
             processNewError("Problem by Update\n");
@@ -464,26 +491,58 @@ public class MainFrame extends JFrame {
     return true;
   }
   
+ //choose the Server (path will be saved by successful Server start)
+ void chooseCommandActionPerformed() {
+   int returnVal = fc.showOpenDialog(this);
+   if (returnVal == JFileChooser.APPROVE_OPTION) {
+     // Open command approved by user
+     File file = fc.getSelectedFile();
+     if(!file.getName().matches(".*\\.js")){
+       processNewError(String.format(messages.getString("wrongFilename"),file.getName()));
+       return;
+     }
+     pathToServer=file.getParent();
+     appFile=file.getName();
+     pathDisplay.setText(pathToServer + "\\" + appFile);
+   } else {
+      //Open command cancelled by user.
+   }
+ }
+  
   // start the Server
   void runCommandActionPerformed() {
     if (exh == null && !serverIsRunning) {
-      logArea.setText(null);
-      if(!checkPrerequisites()) return;
-      handleServerState(true);
-      startServer();
+      // run it in new Thread to update the logArea asynchronously
+      (new Thread() {
+        public void run() {
+          serverIsRunning=true;
+          logArea.setText(null);
+          if(!checkPrerequisites()){
+            serverIsRunning=false;
+            return;
+          }
+          handleServerState(true);
+          startServer();
+        }
+       }).start();
     }
   }
 
   void startServer(){
     try {
+      // create new Exechelper, that handles the server at given path
       exh = ExecHelper.exec(this, new ArrayList<String>() {
         private static final long serialVersionUID = 1L;
         {
           add("node");
-          add(pathToServer + config.getProperty("appFile"));
+          add(pathToServer + "\\" + appFile);
         }
       }, true);
+      // By succesfull Start, save the current path in config
+      config.setProperty("path", pathToServer);
+      config.setProperty("appFile", appFile);
     } catch (IOException ex) {
+      // catch problems by creation of Exechelper
       processNewError(String.format(messages.getObject("cannotExec").toString(), "node"));
       processNewError(ex.getMessage());
     }
@@ -494,7 +553,6 @@ public class MainFrame extends JFrame {
     if (exh != null && serverIsRunning) {
       handleServerState(false);
       exh.stop();
-      
       if (traySupported){
         trayStop.setEnabled(false);
         trayStart.setEnabled(true);
