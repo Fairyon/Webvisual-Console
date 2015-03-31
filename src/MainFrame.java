@@ -71,6 +71,8 @@ public class MainFrame extends JFrame {
   private JMenu jMenuConfig = new JMenu();
   private JMenuItem jMenuLanguage;
   private JMenuItem jMenuMode;
+  private JRadioButtonMenuItem jModeNormal;
+  private JRadioButtonMenuItem jModeDev;
   private JMenu jMenuHelp = new JMenu();
   private JMenuItem jMenuHelpAbout;
   private JLabel pathDisplay = new JLabel();
@@ -228,26 +230,26 @@ public class MainFrame extends JFrame {
     ButtonGroup modeGroup = new ButtonGroup();
     
     jMenuMode = new JMenu(messages.getString("modeMenu"));
-    JRadioButtonMenuItem jMode=new JRadioButtonMenuItem(messages.getString("normalMode"),currentMode);
-    jMode.addActionListener(new ActionListener() {
+    jModeNormal=new JRadioButtonMenuItem(messages.getString("normalMode"),currentMode);
+    jModeNormal.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         currentMode = true;
         config.setProperty("mode", "true");
         renewLabels();
       }
     });
-    jMenuMode.add(jMode);
-    modeGroup.add(jMode);
-    jMode=new JRadioButtonMenuItem(messages.getString("devMode"),!currentMode);
-    jMode.addActionListener(new ActionListener() {
+    jMenuMode.add(jModeNormal);
+    modeGroup.add(jModeNormal);
+    jModeDev=new JRadioButtonMenuItem(messages.getString("devMode"),!currentMode);
+    jModeDev.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         currentMode = false;
         config.setProperty("mode", "false");
         renewLabels();
       }
     });
-    jMenuMode.add(jMode);
-    modeGroup.add(jMode);
+    jMenuMode.add(jModeDev);
+    modeGroup.add(jModeDev);
      
     jMenuConfig.add(jMenuMode);
     jMenuBar1.add(jMenuConfig);
@@ -399,11 +401,15 @@ public class MainFrame extends JFrame {
     statusBar.setText(messages.getString(serverStatus));
     trayIcon.setToolTip(messages.getString(serverStatus));
     jMenuServer.setText(messages.getString("serverMenu"));
+    jMenuServerChoose.setText(messages.getString("chooseServerBt"));
     jMenuServerStart.setText(messages.getString("runServerBt"));
     jMenuServerStop.setText(messages.getString("stopServerBt"));
     jMenuServerExit.setText(messages.getString("exitBt"));
     jMenuConfig.setText(messages.getString("configMenu"));
     jMenuLanguage.setText(messages.getString("languageMenu"));
+    jMenuMode.setText(messages.getString("modeMenu"));
+    jModeNormal.setText(messages.getString("normalMode"));
+    jModeDev.setText(messages.getString("devMode"));
     jMenuHelp.setText(messages.getString("helpMenu"));
     jMenuHelpAbout.setText(messages.getString("aboutBt"));
     ((TitledBorder)jScrollPane1.getBorder()).
