@@ -24,6 +24,7 @@ import java.util.Properties;
 import java.util.ResourceBundle;
 
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -35,17 +36,15 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
-import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 
 public class MainFrame extends JFrame {
@@ -71,6 +70,7 @@ public class MainFrame extends JFrame {
   private JMenuItem jMenuServerExit;
   private JMenu jMenuConfig = new JMenu();
   private JMenuItem jMenuLanguage;
+  private JMenuItem jMenuMode;
   private JMenu jMenuHelp = new JMenu();
   private JMenuItem jMenuHelpAbout;
   private JLabel pathDisplay = new JLabel();
@@ -98,6 +98,7 @@ public class MainFrame extends JFrame {
   private String appFile;
   private boolean opened = true; //true if window is opened
   private boolean serverIsRunning = false; //true if server is running
+  private boolean currentMode; //true = Normal, false = Development
 
   // Construct the frame
   public MainFrame() {
@@ -106,6 +107,7 @@ public class MainFrame extends JFrame {
     pathToServer = config.getProperty("path");
     appFile = config.getProperty("appFile");
     currentLocale = Integer.parseInt(config.getProperty("locale"));
+    currentMode = Boolean.parseBoolean(config.getProperty("mode"));
     messages = ResourceBundle.getBundle("Locale", supportedLocales[currentLocale]);
     
     enableEvents(AWTEvent.WINDOW_EVENT_MASK);
@@ -214,13 +216,40 @@ public class MainFrame extends JFrame {
           getDisplayLanguage(supportedLocales[i]));
       jLanguage.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          renewLabels(tmp);
+          currentLocale=tmp;
+          renewLabels();
         }
       });
       jMenuLanguage.add(jLanguage);
     }
-     
     jMenuConfig.add(jMenuLanguage);
+    
+ // ButtonGroup for radio buttons
+    ButtonGroup modeGroup = new ButtonGroup();
+    
+    jMenuMode = new JMenu(messages.getString("modeMenu"));
+    JRadioButtonMenuItem jMode=new JRadioButtonMenuItem(messages.getString("normalMode"),currentMode);
+    jMode.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        currentMode = true;
+        config.setProperty("mode", "true");
+        renewLabels();
+      }
+    });
+    jMenuMode.add(jMode);
+    modeGroup.add(jMode);
+    jMode=new JRadioButtonMenuItem(messages.getString("devMode"),!currentMode);
+    jMode.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        currentMode = false;
+        config.setProperty("mode", "false");
+        renewLabels();
+      }
+    });
+    jMenuMode.add(jMode);
+    modeGroup.add(jMode);
+     
+    jMenuConfig.add(jMenuMode);
     jMenuBar1.add(jMenuConfig);
     
     // Help Menu
@@ -362,10 +391,9 @@ public class MainFrame extends JFrame {
   }
   
   // Renew all Labels with given index from the currentLocale Array
-  private void renewLabels(int index){
-    config.setProperty("locale", index+"");
-    currentLocale = index;
-    messages = ResourceBundle.getBundle("Locale", supportedLocales[index]);
+  private void renewLabels(){
+    config.setProperty("locale", currentLocale+"");
+    messages = ResourceBundle.getBundle("Locale", supportedLocales[currentLocale]);
     String serverStatus = serverIsRunning?"serverOnline":"serverOffline";
     this.setTitle(messages.getString(serverStatus));
     statusBar.setText(messages.getString(serverStatus));
@@ -589,8 +617,9 @@ public class MainFrame extends JFrame {
   }
   
   // Shows Stop Server Confirmation Window and runs stopServerActionPerformed if Yes was clicked
+  //if !currentMode -> devMode -> no confirmation Window
   private void confirmStopServer(){
-    if(yesNo(messages.getString("serverStopConfirmTitle"), 
+    if(!currentMode || yesNo(messages.getString("serverStopConfirmTitle"), 
         messages.getString("serverStopConfirm"))){
       stopServerActionPerformed();
     }
@@ -630,6 +659,14 @@ public class MainFrame extends JFrame {
       }
       // TODO Auto-generated catch block
       e.printStackTrace();
+    }
+  }
+  
+  public void setTitle(String newTitle){
+    if(currentMode){
+      super.setTitle(newTitle);
+    } else {
+      super.setTitle("dev: "+newTitle);
     }
   }
 }
