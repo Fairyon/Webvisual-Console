@@ -67,6 +67,7 @@ public class MainFrame extends JFrame {
   private JMenuItem jMenuServerChoose;
   private JMenuItem jMenuServerStart;
   private JMenuItem jMenuServerStop;
+  private JMenuItem jMenuServerRestart;
   private JMenuItem jMenuServerExit;
   private JMenu jMenuConfig = new JMenu();
   private JMenuItem jMenuLanguage;
@@ -90,6 +91,7 @@ public class MainFrame extends JFrame {
   private JMenuItem trayShowHide;
   private JMenuItem trayStart;
   private JMenuItem trayStop;
+  private JMenuItem trayRestart;
   private JMenuItem trayExit;  
   
   // Server Execution Helper
@@ -195,6 +197,14 @@ public class MainFrame extends JFrame {
         confirmStopServer();
       }
     });
+    jMenuServerRestart = new JMenuItem(messages.getString("restartServerBt"));  
+    jMenuServerRestart.setEnabled(false); //initially server is stopped
+    jMenuServerRestart.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        confirmStopServer();
+        runCommandActionPerformed();
+      }
+    });
     jMenuServerExit = new JMenuItem(messages.getString("exitBt"));
     jMenuServerExit.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -205,6 +215,7 @@ public class MainFrame extends JFrame {
     jMenuServer.add(jMenuServerChoose);
     jMenuServer.add(jMenuServerStart);
     jMenuServer.add(jMenuServerStop);
+    jMenuServer.add(jMenuServerRestart);
     jMenuServer.add(jMenuServerExit);
     jMenuBar1.add(jMenuServer);
     
@@ -347,6 +358,15 @@ public class MainFrame extends JFrame {
         confirmStopServer();
       }
     });
+    trayRestart = new JMenuItem(messages.getString("restartServerBt"));
+    trayRestart.setEnabled(false); //initially server is stopped
+    trayRestart.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        hiddenDialog.setVisible(false);
+        confirmStopServer();
+        runCommandActionPerformed();
+      }
+    });
     trayShowHide = new JMenuItem(messages.getString("showHideBt"));
     trayShowHide.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -357,6 +377,7 @@ public class MainFrame extends JFrame {
     trayMenu.add(trayShowHide);
     trayMenu.add(trayStart);
     trayMenu.add(trayStop);
+    trayMenu.add(trayRestart);
     trayMenu.add(trayExit);
     trayMenu.setInvoker(hiddenDialog);
     
@@ -404,6 +425,7 @@ public class MainFrame extends JFrame {
     jMenuServerChoose.setText(messages.getString("chooseServerBt"));
     jMenuServerStart.setText(messages.getString("runServerBt"));
     jMenuServerStop.setText(messages.getString("stopServerBt"));
+    jMenuServerRestart.setText(messages.getString("restartServerBt"));
     jMenuServerExit.setText(messages.getString("exitBt"));
     jMenuConfig.setText(messages.getString("configMenu"));
     jMenuLanguage.setText(messages.getString("languageMenu"));
@@ -417,6 +439,7 @@ public class MainFrame extends JFrame {
     trayExit.setText(messages.getString("exitBt"));
     trayStart.setText(messages.getString("runServerBt"));
     trayStop.setText(messages.getString("stopServerBt"));
+    trayRestart.setText(messages.getString("restartServerBt"));
     trayShowHide.setText(messages.getString("showHideBt"));
   }
 
@@ -479,10 +502,12 @@ public class MainFrame extends JFrame {
     setTitle(state);
     jMenuServerStart.setEnabled(!running);
     jMenuServerStop.setEnabled(running);
+    jMenuServerRestart.setEnabled(running);
     
     if (traySupported){
       trayStart.setEnabled(!running);
       trayStop.setEnabled(running);
+      trayRestart.setEnabled(running);
       trayIcon.setToolTip(state);
     }
   }
