@@ -103,6 +103,7 @@ public class MainFrame extends JFrame {
   private boolean opened = true; //true if window is opened
   private boolean serverIsRunning = false; //true if server is running
   private boolean currentMode; //true = Normal, false = Development
+  private boolean waitOnRestart;
 
   // Construct the frame
   public MainFrame() {
@@ -201,8 +202,8 @@ public class MainFrame extends JFrame {
     jMenuServerRestart.setEnabled(false); //initially server is stopped
     jMenuServerRestart.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
+        waitOnRestart = true;
         confirmStopServer();
-        runCommandActionPerformed();
       }
     });
     jMenuServerExit = new JMenuItem(messages.getString("exitBt"));
@@ -491,6 +492,10 @@ public class MainFrame extends JFrame {
   public void serverStopped(int exitValue) {
     exh = null;
     handleServerState(false);
+    if(waitOnRestart){
+      waitOnRestart=false;
+      runCommandActionPerformed();
+    }
   }
   
   //switch all captions to the current state
