@@ -165,6 +165,16 @@ public class MainFrame extends JFrame {
 
   // Main Window Components initialization
   private void jbInit() throws Exception {
+    
+    // Prevents some unexpected program terminations (like kill -15)
+    // by properly shutting the server down (doesn't work with kill -9)
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      @Override
+      public void run() {
+        ExitActionPerformed();
+      }
+    });
+    
     /* Window Properties */
     this.setSize(new Dimension(400, 300));
     this.setTitle(messages.getString("serverOffline"));
@@ -526,29 +536,51 @@ public class MainFrame extends JFrame {
       processNewError(messages.getString("nodeNotExists"));
       return false;
     } else {
-      String[] command = {"node","modChecker.js"};//chec
-      ProcessBuilder processBuilder = new ProcessBuilder(command);
-      processBuilder.directory(new File(pathToServer)); //change exec dir
-      Process pro;
-      try {
-        ExecHelper.exec(this,pro=processBuilder.start(),false);
-        pro.waitFor();
-        if(pro.exitValue()!=0){      
-          processNewError("Not all modules existing. Trying to fix it...\n");
-          command=new String[]{"npm.cmd","update"};
-          processBuilder = new ProcessBuilder(command);
-          processBuilder.directory(new File(pathToServer));
+      if(currentMode){
+        String[] command=new String[]{"npm.cmd","update"};
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+        processBuilder.directory(new File(pathToServer));
+        Process pro;
+        
+        try {
+          processNewInput("Checking Packages...\n");
           ExecHelper.exec(this,pro=processBuilder.start(),false);
           pro.waitFor();
           if(pro.exitValue()!=0){ 
             processNewError("Problem by Update\n");
             return false;
           }
+          processNewInput("Everything is OK!\n");
+        } catch (IOException | InterruptedException e) {
+          processNewError("Something goes wrong!!\n");
+          processNewError(e.getMessage());
+          return false;
         }
-      } catch (IOException | InterruptedException e) {
-        processNewError("Something goes wrong!!\n");
-        processNewError(e.getMessage());
-        return false;
+      } else {
+        String[] command = {"node","modChecker.js"};//chec
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+        processBuilder.directory(new File(pathToServer)); //change exec dir
+        Process pro;
+        try {
+          ExecHelper.exec(this,pro=processBuilder.start(),false);
+          pro.waitFor();
+          if(pro.exitValue()!=0){      
+            processNewError("Not all modules existing. Trying to fix it...\n");
+            command=new String[]{"npm.cmd","update"};
+            processBuilder = new ProcessBuilder(command);
+            processBuilder.directory(new File(pathToServer));
+            ExecHelper.exec(this,pro=processBuilder.start(),false);
+            pro.waitFor();
+            if(pro.exitValue()!=0){ 
+              processNewError("Problem by Update\n");
+              return false;
+            }
+          }
+        } catch (IOException | InterruptedException e) {
+          processNewError("Something goes wrong!!\n");
+          processNewError(e.getMessage());
+          return false;
+        }
       }
     }
     return true;
