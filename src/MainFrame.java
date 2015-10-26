@@ -64,6 +64,7 @@ public class MainFrame extends JFrame {
   private final JFileChooser fc = new JFileChooser();
   private JMenuBar jMenuBar1 = new JMenuBar();
   private JMenu jMenuServer = new JMenu();
+  private JMenuItem jMenuUpdateDependencies;
   private JMenuItem jMenuServerChoose;
   private JMenuItem jMenuServerStart;
   private JMenuItem jMenuServerStop;
@@ -189,6 +190,12 @@ public class MainFrame extends JFrame {
     /* Menus */
     // Server Menu
     jMenuServer.setText(messages.getString("serverMenu"));
+    jMenuUpdateDependencies = new JMenuItem(messages.getString("updateDependenciesBt"));
+    jMenuUpdateDependencies.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        updateDependenciesCommandActionPerformed();
+      }
+    });
     jMenuServerChoose = new JMenuItem(messages.getString("chooseServerBt"));
     jMenuServerChoose.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -223,6 +230,7 @@ public class MainFrame extends JFrame {
       }
     });
     
+    jMenuServer.add(jMenuUpdateDependencies);
     jMenuServer.add(jMenuServerChoose);
     jMenuServer.add(jMenuServerStart);
     jMenuServer.add(jMenuServerStop);
@@ -530,7 +538,7 @@ public class MainFrame extends JFrame {
   //check if node.js and all modules are available
   //!!! modChecker.js must exists to check the modules availability
   //TODO change the commands for the production modus
-  boolean checkPrerequisites(){
+  boolean updatePrerequisites(){
     if(!System.getenv("PATH").contains("node")&&
           !new File(pathToServer+"node.exe").exists()){
       processNewError(messages.getString("nodeNotExists"));
@@ -578,6 +586,19 @@ public class MainFrame extends JFrame {
     return true;
   }
   
+
+  protected void updateDependenciesCommandActionPerformed() {
+    if (exh == null && !serverIsRunning) {
+      (new Thread() {
+        public void run() {
+          updatePrerequisites();
+        }
+      }).start();
+    } else {
+      
+    }
+  }
+  
  //choose the Server (path will be saved by successful Server start)
  void chooseCommandActionPerformed() {
    int returnVal = fc.showOpenDialog(this);
@@ -604,10 +625,6 @@ public class MainFrame extends JFrame {
         public void run() {
           serverIsRunning=true;
           logArea.setText(null);
-          if(!checkPrerequisites()){
-            serverIsRunning=false;
-            return;
-          }
           handleServerState(true);
           startServer();
         }
