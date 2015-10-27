@@ -39,10 +39,12 @@ import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.JViewport;
 import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultCaret;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
@@ -57,6 +59,9 @@ public class MainFrame extends JFrame {
   private int currentLocale;
   private ResourceBundle messages;
   private Locale[] supportedLocales;
+  private boolean autoscroll;
+  private boolean isBottom;
+  private int lastHeight=-1;
   
   // GUI Components
   private static final long serialVersionUID = 1L;
@@ -134,6 +139,7 @@ public class MainFrame extends JFrame {
   
   // get configuration Data from the configuration File and store it local
   private void initConfig(){
+    autoscroll = true;
     FileInputStream confIn = null;
     config = new Properties();
     try {
@@ -312,6 +318,18 @@ public class MainFrame extends JFrame {
         BevelBorder.LOWERED, Color.white, Color.white, new Color(103, 101, 98),
         new Color(148, 145, 140)), messages.getString("logTitle")));
     jScrollPane1.setOpaque(false);
+    
+    jScrollPane1.getVerticalScrollBar().addAdjustmentListener(e -> {
+      JViewport vp = jScrollPane1.getViewport();
+      if(lastHeight<0) lastHeight = vp.getHeight();
+      if (vp.getView().getHeight() <= lastHeight + vp.getViewPosition().y + 5) {
+          isBottom=true;
+      } else {
+        isBottom=false;
+      }
+      lastHeight = vp.getHeight();
+    });
+    
     logArea.setDoubleBuffered(true);
     logArea.setOpaque(false);
     logArea.setText("");
@@ -470,6 +488,9 @@ public class MainFrame extends JFrame {
       doc.insertString(doc.getLength(), text, style); 
     } catch (BadLocationException e){
       //TODO react on exception
+    }
+    if(autoscroll && isBottom){
+      textArea.setCaretPosition(textArea.getDocument().getLength());
     }
   }
 
