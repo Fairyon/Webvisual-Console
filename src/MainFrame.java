@@ -639,11 +639,8 @@ public class MainFrame extends JFrame {
         new ArrayList<String>() {
           private static final long serialVersionUID = 1L;
           {
-            add("cmd.exe");
-            add("/C");
-            add("run.bat");
-            //add(node);
-            //add(appFile);
+            add("node");
+            add(appFile);
           }
         }
       );
