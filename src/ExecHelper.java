@@ -27,25 +27,25 @@ public class ExecHelper implements Runnable {
            * @param n true if testFrame.serverStopped Funktion needs to be called after Process termination
            */
           private ExecHelper(MainFrame testFrame, Process p, boolean n) {
-                // Save variables..
-                handler = testFrame;
-                if(handler == null)handler=new MainFrame();
-                process = p;
-                notify = n;
-                // Get the streams..
-                pErrorStream = process.getErrorStream();
-                pInputStream = process.getInputStream();
-                pOutputStream = process.getOutputStream();
-                // Create a PrintWriter on top of the output stream..
-                outputWriter = new PrintWriter(pOutputStream, true);
-                // Create the threads and start them..
-                processThread = new Thread(this);
-                inReadThread = new Thread(this);
-                errReadThread = new Thread(this);
-                // Start Threads..
-                processThread.start();
-                inReadThread.start();
-                errReadThread.start();
+            // Save variables..
+            handler = testFrame;
+            if(handler == null)handler=new MainFrame();
+            process = p;
+            notify = n;
+            // Get the streams..
+            pErrorStream = process.getErrorStream();
+            pInputStream = process.getInputStream();
+            pOutputStream = process.getOutputStream();
+            // Create a PrintWriter on top of the output stream..
+            outputWriter = new PrintWriter(pOutputStream, true);
+            // Create the threads and start them..
+            processThread = new Thread(this);
+            inReadThread = new Thread(this);
+            errReadThread = new Thread(this);
+            // Start Threads..
+            processThread.start();
+            inReadThread.start();
+            errReadThread.start();
           }
     
           public boolean isAlive(){
@@ -115,7 +115,7 @@ public class ExecHelper implements Runnable {
           
           // Destroy this-Process
           public void stop() {
-                process.destroy();
+            process.destroy();
           }
     
           public void run() {

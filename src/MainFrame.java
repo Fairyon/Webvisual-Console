@@ -634,14 +634,20 @@ public class MainFrame extends JFrame {
 
   void startServer(){
     try {
-      // create new Exechelper, that handles the server at given path
-      exh = ExecHelper.exec(this, new ArrayList<String>() {
-        private static final long serialVersionUID = 1L;
-        {
-          add("node");
-          add(pathToServer + "\\" + appFile);
+      // Build new process for the server at given path
+      ProcessBuilder processBuilder = new ProcessBuilder(
+        new ArrayList<String>() {
+          private static final long serialVersionUID = 1L;
+          {
+            add("node");
+            add("app.js");
+            //add(pathToServer + "\\" + appFile);
+          }
         }
-      }, true);
+      );
+      processBuilder.directory(new File(pathToServer));
+      // create new Exechelper, that handles the server process
+      exh = ExecHelper.exec(this, processBuilder.start(), true);
       // By succesfull Start, save the current path in config
       config.setProperty("path", pathToServer);
       config.setProperty("appFile", appFile);
