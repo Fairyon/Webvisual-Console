@@ -44,7 +44,6 @@ import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultCaret;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
@@ -178,7 +177,7 @@ public class MainFrame extends JFrame {
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
-        ExitActionPerformed();
+        ExitActionPerformed(true);
       }
     });
     
@@ -495,11 +494,12 @@ public class MainFrame extends JFrame {
   }
 
   // Exit program action performed
-  public void ExitActionPerformed() {
+  public void ExitActionPerformed(boolean fromHook) {
     if (exh != null)
       exh.stop();
     updateConfigFile();
-    System.exit(0);
+    // prevent second exit after Hook is called
+    if(!fromHook) System.exit(0);
   }
 
   // Overridden so we can handle the window closing process
@@ -509,7 +509,7 @@ public class MainFrame extends JFrame {
       if (traySupported) {
         opened=false;
       } else if (exitConfirmationWindow()) {
-        ExitActionPerformed();
+        ExitActionPerformed(false);
       } else {
         setVisible(true);
         toFront();
@@ -715,7 +715,7 @@ public class MainFrame extends JFrame {
   // Calls Exit Confirmation Window and runs ExitActionPerformed() if Yes was clicked
   private void confirmExit(){
     if (exitConfirmationWindow()) {
-      ExitActionPerformed();
+      ExitActionPerformed(false);
     }
   }
   
