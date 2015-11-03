@@ -18,6 +18,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Properties;
@@ -671,6 +673,7 @@ public class MainFrame extends JFrame {
       // By succesfull Start, save the current path in config
       config.setProperty("path", pathToServer);
       config.setProperty("appFile", appFile);
+      updateConfigFile();
     } catch (IOException ex) {
       // catch problems by creation of Exechelper
       processNewError(String.format(messages.getObject("cannotExec").toString(), "node"));
@@ -745,24 +748,36 @@ public class MainFrame extends JFrame {
   
   // Update the Configuration File with current Data
   private void updateConfigFile(){
-    FileOutputStream confOut = null;
-    try {
-      confOut = new FileOutputStream(configFile);
-      config.store(confOut, null);
-      confOut.close();
-    } catch (FileNotFoundException e1) {
-      // TODO Auto-generated catch block
-      e1.printStackTrace();
-    } catch (IOException e) {
-      try {
-        confOut.close();
-      } catch (IOException e1) {
-        // TODO Auto-generated catch block
-        e1.printStackTrace();
+    (new Thread() {
+      public void run(){
+        FileOutputStream confOut = null;
+        Writer stringOut = new StringWriter();
+        try {
+          // remove the first line of the config.store() output
+          config.store(stringOut, null);
+          String string = stringOut.toString();
+          String sep = System.getProperty("line.separator");
+          // write contents to file
+          confOut = new FileOutputStream(configFile);
+          confOut.write(
+              string.substring(string.indexOf(sep) + sep.length()).getBytes());
+          confOut.getFD().sync(); // Wait till all data is written
+          confOut.close();
+        } catch (FileNotFoundException e1) {
+          // TODO Auto-generated catch block
+          e1.printStackTrace();
+        } catch (IOException e) {
+          try {
+            confOut.close();
+          } catch (IOException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+          }
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
       }
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
+    }).start();
   }
   
   public void setTitle(String newTitle){
