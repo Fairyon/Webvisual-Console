@@ -18,8 +18,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Properties;
@@ -111,6 +109,7 @@ public class MainFrame extends JFrame {
   private boolean serverIsRunning = false; //true if server is running
   private boolean currentMode; //true = Normal, false = Development
   private boolean waitOnRestart;
+  private boolean isSystemExit;
 
   // Construct the frame
   public MainFrame() {
@@ -499,7 +498,12 @@ public class MainFrame extends JFrame {
   public void ExitActionPerformed(boolean fromHook) {
     if (exh != null)
       exh.stop();
-    updateConfigFile();
+    
+    if(!isSystemExit){
+      // prevent dual call
+      if(!fromHook) isSystemExit=true;
+      updateConfigFile();
+    }
     // prevent second exit after Hook is called
     if(!fromHook) System.exit(0);
   }
@@ -751,16 +755,10 @@ public class MainFrame extends JFrame {
     (new Thread() {
       public void run(){
         FileOutputStream confOut = null;
-        Writer stringOut = new StringWriter();
         try {
-          // remove the first line of the config.store() output
-          config.store(stringOut, null);
-          String string = stringOut.toString();
-          String sep = System.getProperty("line.separator");
-          // write contents to file
           confOut = new FileOutputStream(configFile);
-          confOut.write(
-              string.substring(string.indexOf(sep) + sep.length()).getBytes());
+          // write contents to file
+          config.store(confOut, null);
           confOut.getFD().sync(); // Wait till all data is written
           confOut.close();
         } catch (FileNotFoundException e1) {
