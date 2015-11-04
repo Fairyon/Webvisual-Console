@@ -668,6 +668,10 @@ public class MainFrame extends JFrame {
           {
             add("node");
             add(appFile);
+            if(currentMode){
+              add("-port");
+              add("443");
+            }
           }
         }
       );
