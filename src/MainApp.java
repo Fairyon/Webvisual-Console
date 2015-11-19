@@ -5,20 +5,13 @@ public class MainApp {
 
   public String pathToApp = "";
 
-  // Application things
-  private boolean packFrame = false;
-
   // Construct the application
   public MainApp() {
 
     MainFrame frame = new MainFrame();
-    // Validate frames that have preset sizes
-    // Pack frames that have useful preferred size info, e.g. from their layout
-    if (packFrame) {
-      frame.pack();
-    } else {
-      frame.validate();
-    }
+    
+    frame.validate();
+    
     // Center the window
     Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
     Dimension frameSize = frame.getSize();
